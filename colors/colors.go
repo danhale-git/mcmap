@@ -28,6 +28,11 @@ func MapColors(mapPath string) (map[string]color.Color, error) {
 	colors := make(map[string]color.Color)
 
 	for _, e := range entries {
+		key := strings.Split(e.Name(), "_")[0]
+		if strings.Contains(key, ".") {
+			key = strings.Split(key, ".")[0]
+		}
+
 		if !strings.HasSuffix(e.Name(), ".png") {
 			continue
 		}
@@ -44,10 +49,6 @@ func MapColors(mapPath string) (map[string]color.Color, error) {
 
 		// TODO: Probably want to get the top texture for everything
 
-		key := strings.Split(e.Name(), "_")[0]
-		if strings.Contains(key, ".") {
-			key = strings.Split(key, ".")[0]
-		}
 		colors[key] = c
 	}
 
@@ -67,10 +68,10 @@ func GetColor(f *os.File) (color.Color, error) {
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			pr, pg, pb, pa := m.At(x, y).RGBA()
-			r += pr
-			g += pg
-			b += pb
-			a += pa
+			r += pr >> 8
+			g += pg >> 8
+			b += pb >> 8
+			a += pa >> 8
 		}
 	}
 

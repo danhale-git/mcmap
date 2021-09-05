@@ -1,11 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
+	"image"
 	"image/color"
+	"image/png"
 	"log"
+	"os"
+	"strings"
 
 	"github.com/danhale-git/mcmap/colors"
 
@@ -21,22 +23,28 @@ func main() {
 		log.Fatalf("mapping texture pngs to block colors: %s", err)
 	}
 
-	b, err := json.MarshalIndent(c, "", "  ")
+	/*b, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(string(b))
+	fmt.Println(string(b))*/
+
+	walkTerrain(c, 250)
 }
 
-func walkTerrain(c map[string]color.Color) {
+func walkTerrain(c map[string]color.Color, size int) {
 	w, err := world.New(worldDirPath)
 	if err != nil {
 		log.Fatalf("getting world: %s", err)
 	}
 
-	size := 32
 	yheight := 100
+
+	//
+	upLeft := image.Point{X: 0, Y: 0}
+	lowRight := image.Point{X: size, Y: size}
+	img := image.NewRGBA(image.Rectangle{Min: upLeft, Max: lowRight})
 
 	for x := 0; x < size; x++ {
 		for z := 0; z < size; z++ {
@@ -52,12 +60,32 @@ func walkTerrain(c map[string]color.Color) {
 				}
 
 				if b.ID != "minecraft:air" {
-					fmt.Println(x, y, z, " - ", b.ID)
+					key := strings.Replace(b.ID, "minecraft:", "", 1)
+					col, ok := c[key]
+					if ok {
+						img.Set(x, z, col)
+					} else {
+						//fmt.Println("not found:", key)
+					}
+
+					//fmt.Println(x, y, z, " - ", b.ID, col)
+
 					break yloop
 				}
+
 			}
 		}
 	}
+
+	f, _ := os.Create("test.png")
+	if err := png.Encode(f, img); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := f.Close(); err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 /*func getImageNames() {
